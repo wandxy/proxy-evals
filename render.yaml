@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: proxy-eval-ws
+    runtime: docker
+    dockerfilePath: ./ws/Dockerfile
+    dockerContext: ./ws
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8080"
+
+  - type: web
+    name: proxy-eval-sse
+    runtime: docker
+    dockerfilePath: ./sse/Dockerfile
+    dockerContext: ./sse
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8080"
