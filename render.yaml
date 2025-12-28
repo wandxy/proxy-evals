@@ -34,3 +34,15 @@ services:
     envVars:
       - key: PORT
         value: "8080"
+
+  - type: web
+    name: proxy-eval-http2
+    runtime: docker
+    dockerfilePath: ./http2/Dockerfile
+    dockerContext: ./http2
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8080"
