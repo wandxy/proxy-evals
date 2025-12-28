@@ -68,7 +68,5 @@ services:
     plan: free
     healthCheckPath: /health
     envVars:
-      - key: HTTP_PORT
+      - key: PORT
         value: "8080"
-      - key: GRPC_PORT
-        value: "50051"

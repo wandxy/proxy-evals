@@ -11,8 +11,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app
 COPY --from=builder /app/server .
 
-ENV GRPC_PORT=50051
-ENV HTTP_PORT=8080
-EXPOSE 50051 8080
+ENV PORT=8080
+EXPOSE 8080
 
-CMD ["sh", "-c", "./server -grpc-port ${GRPC_PORT} -http-port ${HTTP_PORT}"]
+CMD ["sh", "-c", "./server -port ${PORT}"]

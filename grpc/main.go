@@ -6,12 +6,10 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"net/http"
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -215,55 +213,33 @@ grpcurl -plaintext -d '{"count":5,"delay_ms":500}' localhost:50051 EchoService/S
 </html>`
 
 func main() {
-	grpcPort := flag.String("grpc-port", "50051", "gRPC server port")
-	httpPort := flag.String("http-port", "8080", "HTTP info page port")
+	port := flag.String("port", "8080", "Server port (serves both gRPC and HTTP)")
 	flag.Parse()
-
-	lis, err := net.Listen("tcp", ":"+*grpcPort)
-	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
-	}
 
 	grpcServer := grpc.NewServer()
 	RegisterEchoServiceServer(grpcServer, &EchoServer{})
 	RegisterHealthServiceServer(grpcServer, &HealthServer{})
-
 	reflection.Register(grpcServer)
 
-	go func() {
-		log.Printf("Starting gRPC server on :%s", *grpcPort)
-		if err := grpcServer.Serve(lis); err != nil {
-			log.Fatalf("Failed to serve: %v", err)
-		}
-	}()
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	httpMux := http.NewServeMux()
+	httpMux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.Write([]byte(clientHTML))
 	})
 
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		conn, err := grpc.Dial("localhost:"+*grpcPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			http.Error(w, "gRPC server unavailable", http.StatusServiceUnavailable)
-			return
-		}
-		defer conn.Close()
-
-		client := NewHealthServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-
-		resp, err := client.Check(ctx, &HealthCheckRequest{})
-		if err != nil {
-			http.Error(w, "Health check failed", http.StatusServiceUnavailable)
-			return
-		}
-
+	httpMux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(fmt.Sprintf(`{"status":"%s"}`, resp.Status)))
+		w.Write([]byte(`{"status":"ok"}`))
 	})
 
-	log.Printf("Starting HTTP info server on :%s", *httpPort)
-	log.Fatal(http.ListenAndServe(":"+*httpPort, nil))
+	mixedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor == 2 && r.Header.Get("Content-Type") == "application/grpc" {
+			grpcServer.ServeHTTP(w, r)
+		} else {
+			httpMux.ServeHTTP(w, r)
+		}
+	})
+
+	log.Printf("Starting server on :%s (gRPC + HTTP)", *port)
+	log.Fatal(http.ListenAndServe(":"+*port, mixedHandler))
 }
