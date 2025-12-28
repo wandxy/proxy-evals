@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"time"
 
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -240,6 +242,14 @@ func main() {
 		}
 	})
 
-	log.Printf("Starting server on :%s (gRPC + HTTP)", *port)
-	log.Fatal(http.ListenAndServe(":"+*port, mixedHandler))
+	h2s := &http2.Server{}
+	h2cHandler := h2c.NewHandler(mixedHandler, h2s)
+
+	server := &http.Server{
+		Addr:    ":" + *port,
+		Handler: h2cHandler,
+	}
+
+	log.Printf("Starting server on :%s (gRPC + HTTP/2 via h2c)", *port)
+	log.Fatal(server.ListenAndServe())
 }
