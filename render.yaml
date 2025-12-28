@@ -46,3 +46,29 @@ services:
     envVars:
       - key: PORT
         value: "8080"
+
+  - type: web
+    name: proxy-eval-long-polling
+    runtime: docker
+    dockerfilePath: ./long-polling/Dockerfile
+    dockerContext: ./long-polling
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8080"
+
+  - type: web
+    name: proxy-eval-grpc
+    runtime: docker
+    dockerfilePath: ./grpc/Dockerfile
+    dockerContext: ./grpc
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: HTTP_PORT
+        value: "8080"
+      - key: GRPC_PORT
+        value: "50051"

@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+option go_package = ".;main";
+
+service EchoService {
+  rpc Echo(EchoRequest) returns (EchoResponse);
+  rpc ServerStream(StreamRequest) returns (stream StreamResponse);
+  rpc ClientStream(stream ClientStreamRequest) returns (ClientStreamResponse);
+  rpc BidirectionalStream(stream ClientStreamRequest) returns (stream StreamResponse);
+}
+
+service HealthService {
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message EchoRequest {
+  string message = 1;
+}
+
+message EchoResponse {
+  string message = 1;
+  int64 timestamp = 2;
+}
+
+message StreamRequest {
+  int32 count = 1;
+  int32 delay_ms = 2;
+}
+
+message StreamResponse {
+  int32 index = 1;
+  string message = 2;
+  int64 timestamp = 3;
+}
+
+message ClientStreamRequest {
+  string message = 1;
+}
+
+message ClientStreamResponse {
+  int32 count = 1;
+  repeated string messages = 2;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  string status = 1;
+}
