@@ -22,3 +22,15 @@ services:
     envVars:
       - key: PORT
         value: "8080"
+
+  - type: web
+    name: proxy-eval-streaming
+    runtime: docker
+    dockerfilePath: ./streaming/Dockerfile
+    dockerContext: ./streaming
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8080"
